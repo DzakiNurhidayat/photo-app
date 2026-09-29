@@ -35,4 +35,9 @@ class Photo extends Model
     {
         return $this->belongsToMany(Tag::class, 'photo_tags');
     }
+
+    public function url(): string
+    {
+        return \Storage::disk($this->disk)->url($this->path);
+    }
 }

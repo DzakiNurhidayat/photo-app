@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Photo;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,6 +23,8 @@ class PhotoUploadService
 
         $exif = $this->readExif($file->getRealPath());
 
+        $exif['taken_at'] ??= now();
+
         return Photo::create([
             'filename'          => $filename,
             'original_filename' => $file->getClientOriginalName(),
@@ -36,6 +39,12 @@ class PhotoUploadService
             'longitude'         => $exif['longitude'],
             'orientation'       => $exif['orientation'],
         ]);
+    }
+
+    public function delete(Photo $photo): void
+    {
+        \Storage::disk($photo->disk)->delete($photo->path);
+        $photo->delete();
     }
 
     private function readExif(string $path): array

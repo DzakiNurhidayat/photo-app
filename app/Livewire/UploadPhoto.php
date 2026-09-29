@@ -22,20 +22,25 @@ class UploadPhoto extends Component
         ];
     }
 
+    public function removePhoto(int $index): void
+    {
+        array_splice($this->photos, $index, 1);
+    }
+
     public function save(PhotoUploadService $service): void
     {
-        \Log::info('save() dipanggil', ['jumlah_foto' => count($this->photos)]);
-
         $this->validate();
 
         $this->uploading = true;
         $this->uploaded = [];
         $this->uploadErrors = [];
 
+        $uploadedIds = [];
+
         foreach ($this->photos as $file) {
             try {
                 $photo = $service->upload($file);
-                $this->uploaded[] = $photo->original_filename;
+                $uploadedIds[] = $photo->id;
             } catch (\Throwable $e) {
                 $this->uploadErrors[] = $file->getClientOriginalName() . ': ' . $e->getMessage();
             }
@@ -43,6 +48,10 @@ class UploadPhoto extends Component
 
         $this->photos = [];
         $this->uploading = false;
+
+        if (! empty($uploadedIds)) {
+            $this->redirect(route('photos.batch-edit', ['ids' => implode(',', $uploadedIds)]));
+        }
     }
 
     public function render()
