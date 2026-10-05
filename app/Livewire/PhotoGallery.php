@@ -22,10 +22,27 @@ class PhotoGallery extends Component
     #[Url]
     public string $sortDir = 'desc';
 
+    #[Url(as: 'photo')]
+    public ?int $selected = null;
+
     public function delete(int $photoId, PhotoUploadService $service): void
     {
         $photo = Photo::findOrFail($photoId);
         $service->delete($photo);
+
+        if ($this->selected === $photoId) {
+            $this->selected = null;
+        }
+    }
+
+    public function openPhoto(int $photoId): void
+    {
+        $this->selected = $photoId;
+    }
+
+    public function closePhoto(): void
+    {
+        $this->selected = null;
     }
 
     public function setSort(string $by): void
@@ -36,6 +53,12 @@ class PhotoGallery extends Component
             $this->sortBy  = $by;
             $this->sortDir = 'desc';
         }
+    }
+
+    public function filterByTag(string $slug): void
+    {
+        $this->tag = $slug;
+        $this->selected = null;
     }
 
     public function clearTag(): void
@@ -66,6 +89,21 @@ class PhotoGallery extends Component
 
         $activeTag = $this->tag ? Tag::where('slug', $this->tag)->first() : null;
 
-        return view('livewire.photo-gallery', compact('photos', 'activeTag'));
+        $selectedPhoto = null;
+        $prevId = $nextId = null;
+
+        if ($this->selected !== null) {
+            $index = $photos->search(fn($p) => $p->id === $this->selected);
+
+            if ($index === false) {
+                $this->selected = null;
+            } else {
+                $selectedPhoto = $photos[$index];
+                $prevId = $photos[$index - 1]->id ?? null;
+                $nextId = $photos[$index + 1]->id ?? null;
+            }
+        }
+
+        return view('livewire.photo-gallery', compact('photos', 'activeTag', 'selectedPhoto', 'prevId', 'nextId'));
     }
 }
