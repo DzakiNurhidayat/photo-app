@@ -11,14 +11,19 @@ class UploadPhoto extends Component
     use WithFileUploads;
 
     public $photos = [];
+
     public bool $uploading = false;
+
     public array $uploaded = [];
+
     public array $uploadErrors = [];
 
     protected function rules(): array
     {
+        // Batasi ke format raster aman. SVG sengaja tidak diizinkan karena dapat memuat
+        // skrip (risiko XSS saat file disajikan dari disk publik).
         return [
-            'photos.*' => 'required|image|max:20480',
+            'photos.*' => 'required|image|mimes:jpeg,jpg,png,webp,gif|max:20480',
         ];
     }
 
@@ -42,7 +47,7 @@ class UploadPhoto extends Component
                 $photo = $service->upload($file);
                 $uploadedIds[] = $photo->id;
             } catch (\Throwable $e) {
-                $this->uploadErrors[] = $file->getClientOriginalName() . ': ' . $e->getMessage();
+                $this->uploadErrors[] = $file->getClientOriginalName().': '.$e->getMessage();
             }
         }
 
