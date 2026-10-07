@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\PhotoRepositoryInterface;
+use App\Repositories\Contracts\TagRepositoryInterface;
+use App\Repositories\EloquentPhotoRepository;
+use App\Repositories\EloquentTagRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +15,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(PhotoRepositoryInterface::class, EloquentPhotoRepository::class);
+        $this->app->bind(TagRepositoryInterface::class, EloquentTagRepository::class);
     }
 
     /**

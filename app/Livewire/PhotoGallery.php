@@ -2,8 +2,8 @@
 
 namespace App\Livewire;
 
-use App\Models\Photo;
-use App\Models\Tag;
+use App\Repositories\Contracts\PhotoRepositoryInterface;
+use App\Repositories\Contracts\TagRepositoryInterface;
 use App\Services\PhotoUploadService;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -25,9 +25,14 @@ class PhotoGallery extends Component
     #[Url(as: 'photo')]
     public ?int $selected = null;
 
-    public function delete(int $photoId, PhotoUploadService $service): void
+    public function delete(int $photoId, PhotoRepositoryInterface $repo, PhotoUploadService $service): void
     {
-        $photo = Photo::findOrFail($photoId);
+        $photo = $repo->find($photoId);
+
+        if ($photo === null) {
+            return;
+        }
+
         $service->delete($photo);
 
         if ($this->selected === $photoId) {
@@ -50,7 +55,7 @@ class PhotoGallery extends Component
         if ($this->sortBy === $by) {
             $this->sortDir = $this->sortDir === 'desc' ? 'asc' : 'desc';
         } else {
-            $this->sortBy  = $by;
+            $this->sortBy = $by;
             $this->sortDir = 'desc';
         }
     }
@@ -66,34 +71,22 @@ class PhotoGallery extends Component
         $this->tag = '';
     }
 
-    public function render()
+    public function render(PhotoRepositoryInterface $repo, TagRepositoryInterface $tags)
     {
-        $query = Photo::with('tags');
+        $photos = $repo->filter([
+            'search' => $this->search,
+            'tag' => $this->tag,
+            'sortBy' => $this->sortBy,
+            'sortDir' => $this->sortDir,
+        ]);
 
-        if ($this->search !== '') {
-            $query->where(function ($q) {
-                $q->where('original_filename', 'ilike', '%' . $this->search . '%')
-                  ->orWhere('caption', 'ilike', '%' . $this->search . '%');
-            });
-        }
-
-        if ($this->tag !== '') {
-            $query->whereHas('tags', fn($q) => $q->where('slug', $this->tag));
-        }
-
-        $allowed = ['taken_at', 'created_at', 'original_filename'];
-        $sortBy  = in_array($this->sortBy, $allowed) ? $this->sortBy : 'taken_at';
-        $sortDir = $this->sortDir === 'asc' ? 'asc' : 'desc';
-
-        $photos = $query->orderBy($sortBy, $sortDir)->get();
-
-        $activeTag = $this->tag ? Tag::where('slug', $this->tag)->first() : null;
+        $activeTag = $this->tag ? $tags->findBySlug($this->tag) : null;
 
         $selectedPhoto = null;
         $prevId = $nextId = null;
 
         if ($this->selected !== null) {
-            $index = $photos->search(fn($p) => $p->id === $this->selected);
+            $index = $photos->search(fn ($p) => $p->id === $this->selected);
 
             if ($index === false) {
                 $this->selected = null;
