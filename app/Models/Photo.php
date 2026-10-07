@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Photo extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'filename',
         'original_filename',
@@ -43,7 +46,7 @@ class Photo extends Model
 
     public function cameraLabel(): ?string
     {
-        $make  = trim((string) $this->camera_make);
+        $make = trim((string) $this->camera_make);
         $model = trim((string) $this->camera_model);
 
         // Banyak kamera sudah menyertakan merek di model, mis. "Canon" + "Canon EOS 80D"
@@ -73,28 +76,28 @@ class Photo extends Model
     public function humanSize(): string
     {
         $units = ['B', 'KB', 'MB', 'GB'];
-        $size  = (float) $this->size;
-        $i     = 0;
+        $size = (float) $this->size;
+        $i = 0;
 
         while ($size >= 1024 && $i < count($units) - 1) {
             $size /= 1024;
             $i++;
         }
 
-        return round($size, $i === 0 ? 0 : 1) . ' ' . $units[$i];
+        return round($size, $i === 0 ? 0 : 1).' '.$units[$i];
     }
 
     public function orientationLabel(): ?string
     {
         return match ($this->orientation) {
-            1       => 'Normal',
-            2       => 'Dicerminkan horizontal',
-            3       => 'Diputar 180°',
-            4       => 'Dicerminkan vertikal',
-            5       => 'Dicerminkan & diputar 90°',
-            6       => 'Diputar 90° searah jarum jam',
-            7       => 'Dicerminkan & diputar 270°',
-            8       => 'Diputar 90° berlawanan jarum jam',
+            1 => 'Normal',
+            2 => 'Dicerminkan horizontal',
+            3 => 'Diputar 180°',
+            4 => 'Dicerminkan vertikal',
+            5 => 'Dicerminkan & diputar 90°',
+            6 => 'Diputar 90° searah jarum jam',
+            7 => 'Dicerminkan & diputar 270°',
+            8 => 'Diputar 90° berlawanan jarum jam',
             default => null,
         };
     }
